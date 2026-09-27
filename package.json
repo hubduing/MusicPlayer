@@ -11,5 +11,19 @@
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {}
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hubduing/MusicPlayer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/hubduing/MusicPlayer/issues"
+  },
+  "homepage": "https://github.com/hubduing/MusicPlayer#readme"
 }

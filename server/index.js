@@ -18,7 +18,15 @@ const { sendJson, sendText, sendBuffer, streamFile, readBody } = require('./lib/
 const { mimeFor, isAudio } = require('./lib/mime');
 const { supportsWriting } = require('./lib/edit-tags');
 
-const WEB_DIR = path.join(__dirname, '..', 'web');
+const WEB_DIR = (() => {
+  try {
+    if (require('node:sea').isSea()) {
+      const nextToExe = path.join(path.dirname(process.execPath), 'web');
+      if (fs.existsSync(path.join(nextToExe, 'index.html'))) return nextToExe;
+    }
+  } catch { /* не SEA — обычный запуск */ }
+  return path.join(__dirname, '..', 'web');
+})();
 const VERSION = '1.0.0';
 
 // ------------------------------------------------------------------ аргументы
@@ -590,6 +598,6 @@ process.on('SIGINT', () => {
   setTimeout(() => process.exit(0), 1500);
 });
 
-if (require.main === module) listen(args.port, args.host);
+if (require.main === module || process.pkg || (() => { try { return require('node:sea').isSea(); } catch { return false; } })()) listen(args.port, args.host);
 
 module.exports = { server, library, store, broadcast };

@@ -9,7 +9,27 @@ const os = require('node:os');
  * Переопределяется переменной GROOVESHELF_DATA; если рядом с проектом писать
  * нельзя (программа на Program Files), уходим в домашний каталог.
  */
-const APP_DIR = path.join(__dirname, '..', '..', 'data');
+const APP_DIR = (() => {
+  // Обычный запуск: server/lib -> корень/data. Бандл build/sea-main.cjs или app/sea-main.cjs -> корень/data.
+  const base = path.basename(__dirname);
+  if (base === 'build' || base === 'app') return path.join(__dirname, '..', 'data');
+  return path.join(__dirname, '..', '..', 'data');
+})();
+
+function isSea() {
+  try {
+    return require('node:sea').isSea();
+  } catch {
+    return false;
+  }
+}
+
+function exeDir() {
+  try {
+    if (process.pkg || isSea()) return path.dirname(process.execPath);
+  } catch { /* ignore */ }
+  return null;
+}
 
 function canWrite(dir) {
   try {
@@ -20,11 +40,31 @@ function canWrite(dir) {
   }
 }
 
-const DATA_DIR = process.env.GROOVESHELF_DATA
-  ? path.resolve(process.env.GROOVESHELF_DATA)
-  : canWrite(path.dirname(APP_DIR)) || fs.existsSync(APP_DIR)
-    ? APP_DIR
-    : path.join(os.homedir(), '.grooveshelf');
+const PKG_EXE_DIR = exeDir();
+const APP_DATA_CANDIDATES = PKG_EXE_DIR
+  ? [path.join(PKG_EXE_DIR, 'data')]
+  : [APP_DIR];
+
+function pickDataDir() {
+  if (process.env.GROOVESHELF_DATA) return path.resolve(process.env.GROOVESHELF_DATA);
+  for (const dir of APP_DATA_CANDIDATES) {
+    try {
+      if (fs.existsSync(dir)) {
+        try {
+          fs.accessSync(dir, fs.constants.W_OK);
+          return dir;
+        } catch { /* try next */ }
+      } else {
+        fs.mkdirSync(dir, { recursive: true });
+        fs.rmdirSync(dir);
+        return dir;
+      }
+    } catch { /* try next */ }
+  }
+  return path.join(os.homedir(), '.grooveshelf');
+}
+
+const DATA_DIR = pickDataDir();
 
 const DB_FILE = path.join(DATA_DIR, 'library.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');

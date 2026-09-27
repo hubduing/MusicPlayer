@@ -1,4 +1,6 @@
 node_modules/
+build/
+dist/
 data/library.json
 data/settings.json
 data/dropped/
