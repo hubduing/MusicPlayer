@@ -91,6 +91,48 @@ node server/index.js [порт] [--port 7412] [--open] [--root "D:\Music"] [--ho
 | `?` | список клавиш |
 | `Esc` | снять выделение / закрыть окно |
 
+## Портативная сборка для Windows
+
+Папка `dist/Grooveshelf/` — самодостаточный плеер, установленный Node.js не нужен:
+двойной щелчок по `Grooveshelf.exe` запускает сервер скрыто (иконка в трее:
+открыть / папка библиотеки / выход, лог — `data/logs/server.log`).
+Повторный запуск лишь открывает плеер в браузере. Папка `data/` с библиотекой
+создаётся рядом с exe при первом старте.
+
+Состав сборки:
+
+```
+dist/Grooveshelf/
+  Grooveshelf.exe        лаунчер (build/launcher.cs): трей, лог, single-instance
+  runtime/node.exe       Node.js (копия, ставить отдельно не нужно)
+  app/sea-main.cjs       сервер, собранный esbuild в один файл
+  web/                   интерфейс (копия каталога web/)
+  data/                  создаётся при первом запуске, в сборку не входит
+```
+
+Как пересобрать (проверено на Windows, кроме Node.js ничего ставить не нужно):
+
+```bat
+npx -y esbuild@0.28.2 server/index.js --bundle --platform=node --format=cjs --outfile=build/sea-main.cjs
+
+mkdir dist\Grooveshelf\runtime dist\Grooveshelf\app dist\Grooveshelf\web
+copy "C:\Program Files\nodejs\node.exe" dist\Grooveshelf\runtime\node.exe
+copy build\sea-main.cjs dist\Grooveshelf\app\sea-main.cjs
+xcopy web dist\Grooveshelf\web /E /I /Y
+
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /nologo /target:winexe /out:dist\Grooveshelf\Grooveshelf.exe build\launcher.cs
+```
+
+Примечания:
+
+- Нужен Node.js 18+ (в текущей сборке — 22.x). `esbuild` подтягивается через
+  `npx`, `csc.exe` входит в Windows (.NET Framework).
+- `build/sea-config.json` и `build/sea.blob` — заготовка под настоящий
+  single-executable через Node SEA; текущей сборке они не нужны.
+- Каталоги `build/` и `dist/` — локальные артефакты, в git не коммитятся.
+- Свою библиотеку (`data/library.json`) в сборку не кладите — получатель
+  начнёт с пустой фонотеки. Путь к данным меняется переменной `GROOVESHELF_DATA`.
+
 ## Где что лежит
 
 ```
