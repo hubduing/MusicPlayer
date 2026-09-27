@@ -1,0 +1,15 @@
+{
+  "name": "grooveshelf",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grooveshelf — оффлайн проигрыватель музыки: папки, отдельные файлы, теги, обложки, плейлисты",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "open": "node server/index.js --open"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ru" data-theme="ember">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Grooveshelf — оффлайн-плеер</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles/app.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="scanline" aria-hidden="true"></div>
+
+<div class="shell" id="shell">
+  <header class="topbar">
+    <button class="btn btn--icon topbar__burger" id="btn-sidebar" data-icon="menu" title="Библиотека" aria-label="Показать библиотеку"></button>
+    <div class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18.5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".55"/><circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".4"/><circle cx="20" cy="20" r="6" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".3"/><circle cx="20" cy="20" r="2.6" fill="currentColor"/></svg>
+      </span>
+      <span class="brand__text">
+        <span class="brand__name">Grooveshelf</span>
+        <span class="brand__sub">оффлайн-фонотека</span>
+      </span>
+    </div>
+
+    <form class="search" id="search-form" role="search" autocomplete="off">
+      <span class="search__icon" data-icon="search" aria-hidden="true"></span>
+      <input id="search" type="search" name="q" placeholder="Название, исполнитель, альбом, год…" aria-label="Поиск по библиотеке">
+      <button type="button" class="search__clear" id="search-clear" data-icon="close" title="Очистить" aria-label="Очистить поиск"></button>
+      <kbd class="search__kbd">/</kbd>
+    </form>
+
+    <div class="topbar__actions">
+      <button class="btn btn--quiet" id="btn-scan" data-icon="refresh" title="Пересканировать библиотеку (F5)"><span>Скан</span></button>
+      <button class="btn btn--quiet" id="btn-theme" data-icon="sun" title="Сменить тему"><span>Тема</span></button>
+      <button class="btn btn--solid" id="btn-add-folder" data-icon="folder-plus"><span>Папка</span></button>
+      <button class="btn" id="btn-add-files" data-icon="file-plus"><span>Файлы</span></button>
+      <button class="btn btn--icon" id="btn-menu" data-icon="menu" title="Действия" aria-label="Действия"></button>
+    </div>
+  </header>
+
+  <aside class="sidebar" id="sidebar">
+    <nav class="nav" aria-label="Разделы библиотеки">
+      <button class="nav__item is-active" data-view="tracks"><span data-icon="list-music"></span><span class="nav__label">Все треки</span><span class="nav__count" id="count-tracks">0</span></button>
+      <button class="nav__item" data-view="albums"><span data-icon="disc"></span><span class="nav__label">Альбомы</span><span class="nav__count" id="count-albums">0</span></button>
+      <button class="nav__item" data-view="artists"><span data-icon="mic"></span><span class="nav__label">Исполнители</span><span class="nav__count" id="count-artists">0</span></button>
+      <button class="nav__item" data-view="favorites"><span data-icon="heart"></span><span class="nav__label">Избранное</span><span class="nav__count" id="count-favorites">0</span></button>
+    </nav>
+
+    <section class="panel" id="panel-sources">
+      <header class="panel__head">
+        <h2 class="panel__title">Источники</h2>
+        <button class="iconbtn" id="btn-add-source" data-icon="plus" title="Добавить папку или файлы" aria-label="Добавить источник"></button>
+      </header>
+      <ul class="srclist" id="source-list"></ul>
+    </section>
+
+    <section class="panel" id="panel-playlists">
+      <header class="panel__head">
+        <h2 class="panel__title">Плейлисты</h2>
+        <button class="iconbtn" id="btn-new-playlist" data-icon="plus" title="Новый плейлист" aria-label="Новый плейлист"></button>
+      </header>
+      <ul class="playlistlist" id="playlist-list"></ul>
+    </section>
+
+    <section class="librarystats" id="stats"></section>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="main__head">
+      <div class="main__title">
+        <p class="eyebrow" id="view-eyebrow">Библиотека</p>
+        <h1 id="view-title">Все треки</h1>
+        <p class="main__meta" id="view-meta">Библиотека пуста</p>
+      </div>
+      <div class="main__tools">
+        <div class="field">
+          <label for="sort">Сортировка</label>
+          <select id="sort">
+            <option value="artist">Исполнитель</option>
+            <option value="album">Альбом</option>
+            <option value="title">Название</option>
+            <option value="year">Год</option>
+            <option value="duration">Длительность</option>
+            <option value="added">Дата добавления</option>
+            <option value="path">Путь к файлу</option>
+          </select>
+        </div>
+        <button class="iconbtn iconbtn--bordered" id="btn-sort-dir" data-icon="arrow-up" title="Направление сортировки" aria-label="Направление сортировки"></button>
+        <button class="btn btn--solid" id="btn-play-all" data-icon="play"><span>Играть всё</span></button>
+        <button class="btn" id="btn-shuffle-all" data-icon="shuffle" title="Перемешать и играть"><span>Вперемешку</span></button>
+      </div>
+    </div>
+
+    <div class="main__body" id="main-body">
+      <div class="view" id="view-tracks" data-view="tracks">
+        <div class="tracks__head" id="tracks-head"></div>
+        <div class="tracks" id="track-list" role="list"></div>
+      </div>
+      <div class="view" id="view-grid" data-view="grid" hidden>
+        <div class="cards" id="card-list"></div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="queue" id="queue" aria-label="Очередь воспроизведения" hidden>
+    <header class="queue__head">
+      <div>
+        <p class="eyebrow">Сейчас играет</p>
+        <h2 id="queue-count">Очередь пуста</h2>
+      </div>
+      <div class="queue__tools">
+        <button class="iconbtn" id="btn-queue-shuffle" data-icon="shuffle" title="Перемешать очередь" aria-label="Перемешать очередь"></button>
+        <button class="iconbtn" id="btn-queue-clear" data-icon="trash" title="Очистить очередь" aria-label="Очистить очередь"></button>
+        <button class="iconbtn" id="btn-queue-close" data-icon="close" title="Скрыть панель" aria-label="Скрыть панель"></button>
+      </div>
+    </header>
+    <div class="queue__now" id="queue-now"></div>
+    <ul class="queue__list" id="queue-list"></ul>
+  </aside>
+
+  <button class="dropveil" id="dropveil" hidden>
+    <span class="dropveil__inner">
+      <span class="dropveil__icon" data-icon="folder-plus"></span>
+      <strong>Отпустите, чтобы добавить в фонотеку</strong>
+      <em>папки и аудиофайлы</em>
+    </span>
+  </button>
+</div>
+
+<footer class="player" id="player">
+  <div class="player__progress" id="progress">
+    <div class="player__progress-fill" id="progress-fill"><i class="player__knob"></i></div>
+  </div>
+
+  <div class="player__grid">
+    <div class="now">
+      <button class="now__art" id="np-art" title="Открыть очередь" aria-label="Обложка">
+        <img id="np-art-img" alt="" hidden>
+        <span class="artfallback" id="np-art-fallback"></span>
+        <span class="now__art-hint" data-icon="list-music"></span>
+      </button>
+      <div class="now__text">
+        <button class="now__title" id="np-title">Ничего не играет</button>
+        <div class="now__sub">
+          <span class="now__artist" id="np-artist">Добавьте музыку, чтобы начать</span>
+          <span class="now__badge" id="np-badge" hidden></span>
+        </div>
+      </div>
+      <button class="iconbtn now__fav" id="btn-fav" data-icon="heart" title="В избранное (F)" aria-label="В избранное"></button>
+    </div>
+
+    <div class="transport">
+      <button class="iconbtn" id="btn-shuffle" data-icon="shuffle" title="Перемешать (S)" aria-label="Перемешать"></button>
+      <button class="iconbtn iconbtn--big" id="btn-prev" data-icon="prev" title="Предыдущий (←)" aria-label="Предыдущий"></button>
+      <button class="playbtn" id="btn-play" data-icon="play" title="Играть / пауза (Space)" aria-label="Играть или пауза"></button>
+      <button class="iconbtn iconbtn--big" id="btn-next" data-icon="next" title="Следующий (→)" aria-label="Следующий"></button>
+      <button class="iconbtn" id="btn-repeat" data-icon="repeat" title="Повтор (R)" aria-label="Повтор"></button>
+    </div>
+
+    <div class="time">
+      <span class="mono" id="time-cur">0:00</span>
+      <span class="time__slash">/</span>
+      <span class="mono time__total" id="time-total">0:00</span>
+    </div>
+
+    <div class="controls">
+      <canvas class="viz" id="viz" width="220" height="40" aria-hidden="true"></canvas>
+      <button class="iconbtn" id="btn-viz" data-icon="wave" title="Визуализатор" aria-label="Визуализатор"></button>
+      <button class="iconbtn" id="btn-mute" data-icon="volume" title="Звук (M)" aria-label="Звук"></button>
+      <div class="slider slider--volume" id="volume" role="slider" aria-label="Громкость" tabindex="0">
+        <div class="slider__fill" id="volume-fill"></div>
+      </div>
+      <button class="iconbtn" id="btn-edit" data-icon="tag" title="Теги трека (E)" aria-label="Редактировать теги"></button>
+      <button class="iconbtn" id="btn-queue" data-icon="list-music" title="Очередь (Q)" aria-label="Очередь"></button>
+    </div>
+  </div>
+</footer>
+
+<div class="modal-root" id="modal-root" hidden></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<ol class="menu" id="ctxmenu" hidden></ol>
+<input type="file" id="file-input" accept="audio/*,.mp3,.flac,.m4a,.aac,.ogg,.opus,.wav,.wma,.aiff" multiple hidden>
+<input type="file" id="cover-input" accept="image/*" hidden>
+
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>

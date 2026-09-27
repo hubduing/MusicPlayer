@@ -1,0 +1,12 @@
+node_modules/
+data/library.json
+data/settings.json
+data/dropped/
+data/backups/
+*.bak
+tests/shots/
+tests/.chrome-profile/
+tests/.fixtures/
+tests/.smoke-data/
+.DS_Store
+Thumbs.db
